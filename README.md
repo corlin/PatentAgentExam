@@ -4,7 +4,7 @@
 
 ## ✨ 核心特性 (Features)
 
-- 🧠 **一句话动态组卷**：基于用户输入（例如“关于无效宣告的多选题”），调用 AI 动态实时编纂具有针对性的考题与深度解析。支持单选、多选混排。
+- 🧠 **一句话动态组卷 (RAG 溯源引擎)**：基于用户输入（例如“关于无效宣告的考点”），系统会首先通过大模型进行语义向量化，在包含 5000+ 条《专利法》及《审查指南》的向量库中检索最相关的法条文本。随后，要求大模型**严格基于检索到的法条原文**动态编纂考题，并在解析中明确引经据典，从根本上杜绝 AI 出题的“幻觉”。支持单选、多选混排。
 - 📊 **专属能力雷达图**：告别盲目刷题。基于答题记录，实时生成个人掌握度雷达图，直观展现您在专利法基础、实务程序等不同维度的强弱项。
 - 📔 **智能错题本系统**：所有在 AI 模考中做错的题目将自动落库至“智能错题本”，保留做错次数与时间，方便后续集中攻坚复习。
 - 🛡️ **现代化 UI 体验**：采用 Glassmorphism（毛玻璃）风格的 Dashboard 与沉浸式刷题界面，在保证长时间专注的同时提供极佳的视觉体验。
@@ -15,8 +15,8 @@
 
 - **Frontend (前端)**: [Next.js](https://nextjs.org/) (React), Tailwind CSS, Recharts, Lucide Icons
 - **Backend (后端)**: [Cloudflare Workers](https://workers.cloudflare.com/), [Hono](https://hono.dev/) Web Framework
-- **Database (数据库)**: [Cloudflare D1](https://developers.cloudflare.com/d1/) (Serverless SQLite)
-- **AI Engine (大模型)**: 深度集成 DeepSeek API 用于动态出题与解析
+- **Database (数据库)**: [Cloudflare D1](https://developers.cloudflare.com/d1/) (Serverless SQLite) + **Cloudflare Vectorize** (向量检索数据库)
+- **AI Engine (大模型)**: 深度集成 DeepSeek API 用于动态出题与解析，集成 Cloudflare Workers AI (`@cf/baai/bge-m3`) 用于文档向量化与语义搜索
 
 ## 📂 项目结构 (Project Structure)
 
