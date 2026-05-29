@@ -476,13 +476,45 @@ rag.post('/generate-custom-mock-exam', async (c) => {
 
     const DEEPSEEK_API_KEY = 'sk-be0bd6eb961c4665aef9190ca910683b';
 
+    // 1. RAG 检索
+    let contextText = "";
+    try {
+      const queryEmbedding = await c.env.AI.run('@cf/baai/bge-m3', { text: [topic] });
+      const queryVector = queryEmbedding.data[0];
+      const searchResults = await c.env.VECTORIZE_INDEX.query(queryVector, { topK: 5, returnValues: false, returnMetadata: true });
+      
+      if (searchResults.matches.length > 0) {
+        const refIds = searchResults.matches.filter(m => m.metadata?.type === 'reference_material').map(m => m.id);
+        const kpIds = searchResults.matches.filter(m => m.metadata?.type === 'knowledge_point').map(m => m.id);
+        
+        let refs: any[] = [];
+        if (refIds.length > 0) {
+          const refPlaceholders = refIds.map(() => '?').join(',');
+          const res = await c.env.DB.prepare(`SELECT source_file, content FROM reference_materials WHERE id IN (${refPlaceholders})`).bind(...refIds).all();
+          refs = res.results.map((r: any) => `【《${r.source_file}》】: ${r.content}`);
+        }
+
+        let kps: any[] = [];
+        if (kpIds.length > 0) {
+          const kpPlaceholders = kpIds.map(() => '?').join(',');
+          const res = await c.env.DB.prepare(`SELECT name, description FROM knowledge_points WHERE id IN (${kpPlaceholders})`).bind(...kpIds).all();
+          kps = res.results.map((k: any) => `【${k.name}】: ${k.description}`);
+        }
+        
+        contextText = [...kps, ...refs].join('\n\n');
+      }
+    } catch (err) {
+      console.warn("Vectorize search failed during custom mock exam, falling back to basic prompt", err);
+    }
+
     const systemPrompt = `你是一位国家知识产权局专利局资深出题专家。
-请根据考生提供的【练习主题/要求】，为其出一套包含 ${count} 道题目的单项选择题微型试卷。
+请根据考生提供的【练习主题/要求】，为其出一套包含 ${count} 道题目的单项或多项选择题微型试卷。
+${contextText ? '重要：请你必须**严格且仅基于**下面提供的【参考资料】来出题。禁止凭空捏造知识点。如果参考资料不足以出满题目，可以稍微扩展，但绝对不能违背参考资料中的法条精神。' : ''}
 要求：
 1. 题目之间要尽量覆盖该主题的不同侧面，避免重复。
-2. 每道题目必须有 A, B, C, D 四个选项，并且必须有且仅有一个正确答案。
+2. 每道题目必须有 A, B, C, D 四个选项，并且必须有且仅有一个正确答案（多选可以有多个正确答案）。
 3. 干扰项（错误选项）必须具备一定的迷惑性，符合常见的易错点。
-4. 必须输出一段详细的解析说明为什么选该答案以及其他选项错在哪里。
+4. 必须输出一段详细的解析说明为什么选该答案以及其他选项错在哪里。${contextText ? '并且，在解析中必须明确引用原法条出处（如：“根据《专利法》第X条...”）。' : ''}
 5. 你的输出必须是合法的纯 JSON 格式，直接输出一个 JSON 对象，对象内部包含一个名为 "questions" 的数组。不要包裹任何 Markdown 标记（不要有 \`\`\`json ）。
 6. 严禁在 JSON 字符串值中直接使用真实的换行符，所有字符串内部的换行请严格使用 \\n 转义。
 
@@ -498,14 +530,15 @@ JSON 格式要求如下：
         {"key": "C", "text": "选项C内容"},
         {"key": "D", "text": "选项D内容"}
       ],
-      "correct_answer": "A",
-      "explanation": "详细解析..."
+      "correct_answer": "A", // 多选题则如 "A,B" 或 "ACD"
+      "explanation": "详细解析，必须包含法条溯源..."
     }
   ]
 }`;
 
     const userPrompt = `
 【练习主题/要求】: ${topic}
+${contextText ? `\n【参考资料】:\n${contextText}` : ''}
 `;
 
     const res = await fetch('https://api.deepseek.com/chat/completions', {
