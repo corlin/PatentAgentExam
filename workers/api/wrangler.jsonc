@@ -1,0 +1,48 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "api",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-05-28",
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "patent-exam-db",
+			"database_id": "fbf4a9a9-1409-4b02-ad7f-0050e3f2e2eb",
+			"migrations_dir": "../../migrations/d1"
+		}
+	],
+	// "r2_buckets": [
+	// 	{
+	// 		"binding": "STORAGE",
+	// 		"bucket_name": "patent-exam-storage"
+	// 	}
+	// ],
+	"vectorize": [
+		{
+			"binding": "VECTORIZE_INDEX",
+			"index_name": "patent-exam-vectors"
+		}
+	],
+	// "queues": {
+	// 	"producers": [
+	// 		{
+	// 			"binding": "DOCUMENT_QUEUE",
+	// 			"queue": "patent-exam-document-queue"
+	// 		}
+	// 	],
+	// 	"consumers": [
+	// 		{
+	// 			"queue": "patent-exam-document-queue",
+	// 			"max_batch_size": 10,
+	// 			"max_batch_timeout": 5,
+	// 			"max_retries": 3
+	// 		}
+	// 	]
+	// },
+	"ai": {
+		"binding": "AI"
+	},
+	"observability": {
+		"enabled": true
+	}
+}

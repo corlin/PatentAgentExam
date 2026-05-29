@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.DS_Store
+dist/
+build/
+.next/
+*.log
+.wrangler/
+.turbo/
+docs/
+arch.md
+mineru.md
+*.pdf
+*.zip
+*.tar.gz

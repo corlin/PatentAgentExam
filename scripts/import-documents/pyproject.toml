@@ -1,0 +1,9 @@
+[project]
+name = "import-documents"
+version = "0.1.0"
+description = "MinerU PDF extraction and Cloudflare D1 import scripts"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.1",
+]
